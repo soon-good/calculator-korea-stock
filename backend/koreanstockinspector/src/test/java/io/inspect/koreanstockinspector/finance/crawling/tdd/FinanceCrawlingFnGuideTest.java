@@ -1,5 +1,9 @@
-package io.inspect.koreanstockinspector.financial.crawling.tdd;
+package io.inspect.koreanstockinspector.finance.crawling.tdd;
 
+import io.inspect.koreanstockinspector.request.fnguide.FnGuidePageParam;
+import io.inspect.koreanstockinspector.request.fnguide.ParameterPair;
+import io.inspect.koreanstockinspector.request.fnguide.ParameterType;
+import org.assertj.core.api.Assertions;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -13,7 +17,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class FinancialCrawlingFnGuideTest {
+public class FinanceCrawlingFnGuideTest {
     final StringBuilder urlStringBuilder = new StringBuilder();
     final String baseURL = "http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp";
     final String tablesDivClassSelector = "ul_col2wrap pd_t25";
@@ -25,11 +29,67 @@ public class FinancialCrawlingFnGuideTest {
     record TimeKeyDataValue(String time, String data){};
     record TableRow(String name, List<TimeKeyDataValue> eachTimeValues){};
 
+
+
     @BeforeEach
     public void testLocalInit(){
 
     }
 
+    //TODO
+    // 우선 내가 구하려고 하는 것은 모든 정보가 아니다. 그냥 난 매출액, 영업이익, 당기순이익 이다.
+    // 1) URL 구하는 기능 공통화
+    // 2) table 태그 파싱하는 기능 함수로 만들어서 공통화
+    // - 소기능으로 분류될만한 것들
+    //      ...
+    // 3) 구하려는 기능에서 매출액, 영업이익, 당기순이익만 뽑아내는 기능
+    // 2), 3) 은 서로 같은 함수 내 다른 작은 메서드들로 분류되는 메서드로 분기될 수 있다.
+
+
+    // 1) URL 구하는 기능 공통화 및 각종 파라미터, URL 상수화
+    // = 내가 원하는것 ? 최대한 가변적이지 않은 프로그램으로 만들기
+    @Test
+    public void TEST_REQUEST_URL(){
+        ParameterPair pGB = new ParameterPair(ParameterType.pGB, "1");
+        ParameterPair gicode = new ParameterPair(ParameterType.gicode, "A005930");
+
+        FnGuidePageParam fnGuideParam = FnGuidePageParam.builder()
+                .pageType(FnGuidePageParam.PageType.FINANCE)
+                .parameterPairs(List.of(pGB, gicode))
+                .build();
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(FnGuidePageParam.PageType.FINANCE.getBaseUrl()).append("?");
+
+        // 이 부분은 조금 수정이 필요하다. (for 문 ~ requestUrl 생성 부분)
+        for(ParameterPair pair : fnGuideParam.getParameterPairs()){
+            builder.append(pair.getParameterType().getParamName())
+                    .append("=")
+                    .append(pair.getValue());
+
+            builder.append("&");
+        }
+
+        String requestUrl = builder.toString();
+        requestUrl = requestUrl.substring(0, requestUrl.length()-1);
+
+        Assertions.assertThat(requestUrl).isEqualTo("http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGb=1&gicode=A005930");
+    }
+
+//    @Test
+//    public void stringBuildertest(){
+//        StringBuilder builder = new StringBuilder();
+//        builder.append(FnGuidePageParam.PageType.FINANCE);
+//
+//        List.of()
+//    }
+
+    public Document requestFnGuidePage(String url, Param param){
+//        Jsoup.connect()
+        return null;
+    }
+
+    // 오케이... 여기까지는 일단 뭐가 있는지 해봤다. 이제부터는 위의 테스트 코드에서 리팩토링을 하면서 진행할 예정
     @Test
     public void TEST_FNGUIDE_PAGE_CONNECT_SUCCESS(){
         Param param = new Param("pGB", 1, "gicode", "A005930");
