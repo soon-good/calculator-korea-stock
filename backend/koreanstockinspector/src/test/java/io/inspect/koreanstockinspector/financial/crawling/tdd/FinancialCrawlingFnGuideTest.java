@@ -48,22 +48,20 @@ public class FinancialCrawlingFnGuideTest {
                     .append("div[class=").append("\"").append(tableSelector).append("\"").append("]");
 
 //            Elements select = document.select("div[class=\"ul_col2wrap pd_t25\"] div[class=\"ul_co1_c pd_t1\"]");
-            Elements select = document.select(tableSelectorBuilder.toString());
+            Elements allTableEl = document.select(tableSelectorBuilder.toString());
 
             StringBuilder gainLossTableSelectorBuilder = new StringBuilder();
             gainLossTableSelectorBuilder
                     .append("div[id=\"").append(gainLossTableSelector).append("\"").append("]").append(" > ").append("table");
 
-//            int size = select.select("div[id=\"divSonikY\"] > table").size();
-//            int size = select.select(gainLossTableSelectorBuilder.toString()).size();
+            // 1) 포괄 손익 계산서
+            Elements gainLossTableEl = allTableEl.select(gainLossTableSelectorBuilder.toString());
 
-            Elements gainLossTableEl = select.select(gainLossTableSelectorBuilder.toString());
+            StringBuilder gainLossTableYearsSelector = new StringBuilder();
+            gainLossTableYearsSelector.append("th[scope=").append("\"").append("col").append("\"").append("]");
+            Elements yearsEl = gainLossTableEl.select(gainLossTableYearsSelector.toString());
 
-            StringBuilder yearListBuilder = new StringBuilder();
-            yearListBuilder.append("th[scope=").append("\"").append("col").append("\"").append("]");
-            Elements th = gainLossTableEl.select(yearListBuilder.toString());
-
-            List<String> list = th.eachText();
+            List<String> list = yearsEl.eachText();
             List<String> years = IntStream.range(0, list.size())
                     .filter(i -> i != 0)
                     .filter(i -> i < list.size() - 2)
