@@ -11,6 +11,8 @@ import java.util.List;
 // 왜냐하면 소스코드가 주기적으로 바뀌기 때문.
 // 완성된 코드만 소스레벨로 옮기겠다. 하는 마인드로 다시한번 바꿔볼까? 생각중
 public class FnGuidePageParam {
+    private final StringBuilder builder = new StringBuilder();
+
     @Getter private final PageType pageType;
     @Getter private final List<ParameterPair> parameterPairs;
 
@@ -23,18 +25,32 @@ public class FnGuidePageParam {
         this.parameterPairs = parameterPairs;
     }
 
-    public String newRequestUrl(){
-        StringBuilder builder = new StringBuilder();
-        builder.append(pageType.getBaseUrl()).append("?");
-        // STUB
+    public ParameterPair pair(ParameterPair pair){
+        builder.append(pair.getParameterType().getParamName())
+                .append("=")
+                .append(pair.getValue());
+        return pair;
+    }
 
-//        parameterPairs.forEach(parameterPair -> {builder.append(parameterPair.)})
-//
-//                .append(param.pageNoName).append("=").append(param.pageNoValue)
-//                .append("&")
-//                .append(param.companyNoName).append("=").append(param.companyNoValue)
-//                .toString();
-        return null;
+    public void and(ParameterPair pair){
+        builder.append("&");
+    }
+
+    public String stripLastAnd(){
+        if(builder.lastIndexOf("&") == builder.length() -1)
+            return builder.substring(0, builder.length()-1);
+        return builder.toString();
+    }
+
+    public String buildUrl(){
+        builder.append(pageType.getBaseUrl()).append("?");
+
+        parameterPairs.stream()
+                .map(this::pair)
+                .forEach(this::and);
+
+        // 이 부분은 조금 마음에 안든다. ㅠㅠ
+        return stripLastAnd();
     }
 
     public enum PageType{
