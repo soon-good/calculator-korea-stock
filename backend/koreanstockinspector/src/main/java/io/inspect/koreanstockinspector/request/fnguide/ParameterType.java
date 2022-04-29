@@ -3,7 +3,7 @@ package io.inspect.koreanstockinspector.request.fnguide;
 import lombok.Getter;
 
 public enum ParameterType {
-    pGB("pGb", "페이지구분"),
+    pGb("pGb", "페이지구분"),
     gicode("gicode", "기업코드");
 
     @Getter private final String paramName;

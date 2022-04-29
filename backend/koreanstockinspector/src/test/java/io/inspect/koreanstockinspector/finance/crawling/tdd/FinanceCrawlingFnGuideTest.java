@@ -3,15 +3,18 @@ package io.inspect.koreanstockinspector.finance.crawling.tdd;
 import io.inspect.koreanstockinspector.request.fnguide.FnGuidePageParam;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterPair;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterType;
+
 import org.assertj.core.api.Assertions;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -45,35 +48,74 @@ public class FinanceCrawlingFnGuideTest {
     // 3) 구하려는 기능에서 매출액, 영업이익, 당기순이익만 뽑아내는 기능
     // 2), 3) 은 서로 같은 함수 내 다른 작은 메서드들로 분류되는 메서드로 분기될 수 있다.
 
+    @Test
+    public void TEST_INT_STREAM(){
+        List<String> words = List.of("A","B","C");
+
+        // IntStream.range(0, words.size())
+        //     .
+
+    }
+
+    public StringBuilder appendKeyPair(ParameterPair pair, StringBuilder builder){
+        if(Optional.ofNullable(builder).isEmpty()) builder = new StringBuilder();
+
+        builder.append(pair.getParameterType().getParamName())
+            .append("=")
+            .append(pair.getValue());
+
+        return builder;
+    }
+
+    public StringBuilder appendAnd(StringBuilder builder){
+        return builder.append("&");
+    }
+
+    public String stripLastAnd(StringBuilder builder){
+        if(builder.toString().lastIndexOf("&") == builder.toString().length()-1)
+            return builder.toString().substring(0, builder.toString().length()-1);
+            // if()
+        // return builder.toString().substring(0, builder.toString().lastIndexOf("&"));
+        return builder.toString();
+    }
 
     // 1) URL 구하는 기능 공통화 및 각종 파라미터, URL 상수화
     // = 내가 원하는것 ? 최대한 가변적이지 않은 프로그램으로 만들기
     @Test
+    @DisplayName("크롤링할 페이지의 url 과 파라미터들을 조합한다.")
     public void TEST_REQUEST_URL(){
-        ParameterPair pGB = new ParameterPair(ParameterType.pGB, "1");
+        ParameterPair pGb = new ParameterPair(ParameterType.pGb, "1");
         ParameterPair gicode = new ParameterPair(ParameterType.gicode, "A005930");
 
         FnGuidePageParam fnGuideParam = FnGuidePageParam.builder()
                 .pageType(FnGuidePageParam.PageType.FINANCE)
-                .parameterPairs(List.of(pGB, gicode))
+                .parameterPairs(List.of(pGb, gicode))
                 .build();
 
         StringBuilder builder = new StringBuilder();
         builder.append(FnGuidePageParam.PageType.FINANCE.getBaseUrl()).append("?");
 
+        fnGuideParam.getParameterPairs()
+            .stream()
+            .map(pair -> appendKeyPair(pair, builder))
+            .forEach(strBuilder -> appendAnd(strBuilder));
+
+        String targetUrl = stripLastAnd(builder);
+        Assertions.assertThat(targetUrl).isEqualTo("http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGb=1&gicode=A005930");
+
         // 이 부분은 조금 수정이 필요하다. (for 문 ~ requestUrl 생성 부분)
-        for(ParameterPair pair : fnGuideParam.getParameterPairs()){
-            builder.append(pair.getParameterType().getParamName())
-                    .append("=")
-                    .append(pair.getValue());
-
-            builder.append("&");
-        }
-
-        String requestUrl = builder.toString();
-        requestUrl = requestUrl.substring(0, requestUrl.length()-1);
-
-        Assertions.assertThat(requestUrl).isEqualTo("http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGb=1&gicode=A005930");
+        // for(ParameterPair pair : fnGuideParam.getParameterPairs()){
+        //     builder.append(pair.getParameterType().getParamName())
+        //             .append("=")
+        //             .append(pair.getValue());
+        //
+        //     builder.append("&");
+        // }
+        //
+        // String requestUrl = builder.toString();
+        // requestUrl = requestUrl.substring(0, requestUrl.length()-1);
+        //
+        // Assertions.assertThat(requestUrl).isEqualTo("http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGb=1&gicode=A005930");
     }
 
 //    @Test
