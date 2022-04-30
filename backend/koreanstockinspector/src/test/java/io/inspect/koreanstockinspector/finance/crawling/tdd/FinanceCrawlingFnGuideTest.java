@@ -3,6 +3,9 @@ package io.inspect.koreanstockinspector.finance.crawling.tdd;
 import io.inspect.koreanstockinspector.request.fnguide.FnGuidePageParam;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterPair;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterType;
+import lombok.Builder;
+import lombok.Getter;
+import org.assertj.core.api.Assertions;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -12,7 +15,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -63,17 +68,193 @@ public class FinanceCrawlingFnGuideTest {
         assertThat(testURL).isEqualTo("http://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGb=1&gicode=A005930");
     }
 
-//    @Test
-//    public void stringBuildertest(){
-//        StringBuilder builder = new StringBuilder();
-//        builder.append(FnGuidePageParam.PageType.FINANCE);
-//
-//        List.of()
-//    }
+    public Optional<Document> getDocument(String url){
+        try {
+            return Optional.ofNullable(Jsoup.connect(url).get());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
 
-    public Document requestFnGuidePage(String url, Param param){
-//        Jsoup.connect()
-        return null;
+    public String newFnGuideUrl(FnGuidePageParam.PageType pageType, List<ParameterPair> parameterPairs){
+        return FnGuidePageParam.builder()
+                .pageType(FnGuidePageParam.PageType.FINANCE)
+                .parameterPairs(parameterPairs)
+                .build()
+                .buildUrl();
+    }
+
+    // 2) 테이블 태그 파싱 기능
+    @Test
+    @DisplayName("")
+    public void TEST_FNGUIDE_CONNECT_SUCCESSFUL(){
+        String requestUrl = newFnGuideUrl(FnGuidePageParam.PageType.FINANCE, testParameters1());
+
+        Optional<Document> document = getDocument(requestUrl);
+        assertThat(document).isNotEmpty();
+    }
+
+    // 2 ) ===== HTML 파싱 기능 테스트코드 시작
+
+    enum ElementType{
+        DIV("div"), TABLE("table"), TBODY("table"), TR("TR"), TH("th");
+
+        @Getter private final String el;
+
+        ElementType(String el){
+            this.el = el;
+        }
+    }
+
+    enum SelectorType{
+        CLASS("class=", "."), ID("id=", "#");
+        @Getter private final String fullSelector;
+        @Getter private final String shortSelector;
+
+        SelectorType(String fullSelector, String shortSelector){
+            this.fullSelector = fullSelector;
+            this.shortSelector = shortSelector;
+        }
+    }
+
+    enum SpecifierType{
+        FULL("FULL"), SHORT("SHORT");
+        @Getter private final String specifierTypeName;
+
+        SpecifierType(String specifierTypeName){
+            this.specifierTypeName = specifierTypeName;
+        }
+    }
+
+    static class ElementSelectorPair{
+        @Getter private final ElementType elementType;
+        @Getter private final SelectorType selectorType;
+        @Getter private final SpecifierType specifierType;
+        @Getter private final String specifier;
+
+        private final StringBuilder builder = new StringBuilder();
+
+        @Builder
+        public ElementSelectorPair(ElementType elementType, SelectorType selectorType, SpecifierType specifierType, String specifier){
+            this.elementType = elementType;
+            this.selectorType = selectorType;
+            this.specifierType = specifierType;
+            this.specifier = specifier;
+        }
+
+        // 테스트코드를 만들면서 소기능으로 분해됬다. 좋은 습관이다.
+        public String ofEl(ElementSelectorPair pair){
+            return pair.getElementType().getEl();
+        }
+
+        // 테스트코드를 만들면서 소기능으로 분해됬다. 좋은 습관이다.
+        public String ofFullSelector(ElementSelectorPair pair){
+            return pair.getSelectorType().getFullSelector();
+        }
+
+        public String ofSpecifier(ElementSelectorPair pair){
+            return pair.getSpecifier();
+        }
+
+        public StringBuilder fullSelector(ElementSelectorPair pair){
+            return builder
+                    .append(ofEl(pair))                                         // div
+                    .append("[")                                                //      [
+                    .append(ofFullSelector(pair))                               //          class=
+                    .append("\"").append(ofSpecifier(pair)).append("\"")        //          "ul_col2wrap pd_t25"
+                    .append("]");                                               //      ]
+        }
+
+        public StringBuilder ofSelector(){
+            if(specifierType.equals(SpecifierType.FULL)){
+                return fullSelector(this);
+            }
+            return fullSelector(this); // default;
+        }
+
+        public StringBuilder ofSelector(ElementSelectorPair pair){
+            if(specifierType.equals(SpecifierType.FULL)){
+                return fullSelector(pair);
+            }
+            return fullSelector(pair); // default;
+        }
+    }
+
+    static class HTMLSelectQuery {
+        private final List<ElementSelectorPair> selectorPairs;
+        private final StringBuilder builder = new StringBuilder();
+
+        @Builder
+        public HTMLSelectQuery(List<ElementSelectorPair> selectorPairs){
+            this.selectorPairs = selectorPairs;
+        }
+
+        public StringBuilder query(ElementSelectorPair pair){
+            return builder.append(pair.ofSelector());
+        }
+
+        public StringBuilder and(){
+            return builder.append(" ");
+        }
+
+        public String queryString(){
+            selectorPairs.forEach(
+                    pair -> query(pair).append(" ")
+            );
+            return builder.toString().trim();
+        }
+    }
+
+    @Test
+    @DisplayName("HTML 셀렉터, HTML 요소 를 결합한 선택자 생성기능 테스트 #1")
+    public void TEST_HTML_SELECTOR_SPECIFIER_QUERY_1(){
+        String requestUrl = newFnGuideUrl(FnGuidePageParam.PageType.FINANCE, testParameters1());
+
+        getDocument(requestUrl).ifPresent(document -> {
+
+            HTMLSelectQuery htmlSelectQuery = HTMLSelectQuery.builder()
+                    .selectorPairs(testElementSelectorPairs1())
+                    .build();
+
+            String query = htmlSelectQuery.queryString();
+
+            StringBuilder targetSql = new StringBuilder();
+
+            targetSql
+                    .append("div[class=").append("\"").append(tablesDivClassSelector).append("\"").append("]")
+                    .append(" ")
+                    .append("div[class=").append("\"").append(tableSelector).append("\"").append("]");
+
+            assertThat(query).isEqualTo(targetSql.toString());
+        });
+    }
+
+    // URL 테스트 용도 파라미터 생성
+    public List<ParameterPair> testParameters1(){
+        ParameterPair pGb = new ParameterPair(ParameterType.pGb, "1");
+        ParameterPair gicode = new ParameterPair(ParameterType.gicode, "A005930");
+        return List.of(pGb, gicode);
+    }
+
+    public ElementSelectorPair ofElementSelectorPair(ElementType elementType, SelectorType selectorType, SpecifierType specifierType, String specifier){
+        Objects.requireNonNull(elementType);
+        Objects.requireNonNull(selectorType);
+        Objects.requireNonNull(specifierType);
+
+        return ElementSelectorPair.builder()
+                .elementType(elementType)
+                .selectorType(selectorType)
+                .specifierType(specifierType)
+                .specifier(specifier)
+                .build();
+    }
+
+    // 테스트 용도 선택자 리스트 파라미터 생성
+    public List<ElementSelectorPair> testElementSelectorPairs1(){
+        ElementSelectorPair sel1 = ofElementSelectorPair(ElementType.DIV, SelectorType.CLASS, SpecifierType.FULL, tablesDivClassSelector);
+        ElementSelectorPair sel2 = ofElementSelectorPair(ElementType.DIV, SelectorType.CLASS, SpecifierType.FULL, tableSelector);
+        return List.of(sel1, sel2);
     }
 
     // 오케이... 여기까지는 일단 뭐가 있는지 해봤다. 이제부터는 위의 테스트 코드에서 리팩토링을 하면서 진행할 예정
@@ -85,6 +266,10 @@ public class FinanceCrawlingFnGuideTest {
                 .append("&")
                 .append(param.companyNoName).append("=").append(param.companyNoValue)
                 .toString();
+
+        // selector ( DIV, class, "selector")
+        // and (" ")
+        // selector (DIV, class, "selector");
 
         try {
             Document document = Jsoup.connect(url).get();
