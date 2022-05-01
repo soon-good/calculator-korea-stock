@@ -11,10 +11,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -148,7 +150,7 @@ public class FinanceCrawlingFnGuideTest {
 
                 atParentFindChild(divElement, yearlyGainLossDiv, yearlyGainLossTable).ifPresent(yearlyTableElement->{
 
-                    // 1) 연도 파싱 (임시)
+                    // 1) 연도 파싱
                     List<GainLossPeriods> yearsList = yearlyTableElement.select("tr").tagName("tr")
                             .stream().limit(1)
                             .map(thtd -> {
@@ -179,11 +181,39 @@ public class FinanceCrawlingFnGuideTest {
                             .map(thtd -> {
                                 String label = thtd.tagName("th").select("div").text();
                                 String value = thtd.tagName("td").select(".r").text();
-                                return new GainLossDto(GainLossColumn.NetIncome.krTypeOf(label), Arrays.asList(value.split(" ")).subList(0,4));
+                                List<BigDecimal> valueList = Arrays.asList(value.split(" ")).subList(0, 4)
+                                        .stream()
+                                        .map(str -> {
+                                            try {
+                                                Number parse = NumberFormat.getNumberInstance(Locale.US).parse(str);
+                                                BigDecimal parsedValue = new BigDecimal(parse.toString());
+                                                return parsedValue;
+                                            } catch (ParseException e) {
+                                                e.printStackTrace();
+                                            }
+                                            return null;
+                                        })
+                                        .filter(Objects::nonNull)
+                                        .collect(Collectors.toList());
+//                                return new GainLossDto(GainLossColumn.NetIncome.krTypeOf(label), Arrays.asList(value.split(" ")).subList(0,4));
+                                return new GainLossDto(GainLossColumn.NetIncome.krTypeOf(label), valueList);
                             })
                             .collect(Collectors.toList());
 
-                    System.out.println(l);
+                    System.out.println("values = " + l);
+
+                    List<PeriodType> periodList = List.of(PeriodType.FIRST_PREV, PeriodType.SECOND_PREV, PeriodType.THIRD_PREV, PeriodType.FOURTH_PREV);
+
+                    l.stream()
+                            .forEach(gainLossDto -> {
+                                GainLossColumn valueType = gainLossDto.getType();
+                                periodList.stream()
+                                        .forEach(periodType -> {
+                                            BigDecimal bigDecimal = gainLossDto.getValues().get(periodType.getIndexAs());
+                                            System.out.println("valueType = " + valueType + ", " + periodType + ", " + periodType.getPeriodValue(yearsList.get(0)) + ", " + bigDecimal);
+
+                                        });
+                            });
 
                 });
             });
