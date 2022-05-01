@@ -167,7 +167,7 @@ public class FinanceCrawlingFnGuideTest {
 
                     System.out.println("years = " + yearsList.get(0));
 
-                    // 각 항목 파싱 (매출액, 영업이익, 당기순이익)
+                    // 2) 각 항목 파싱 (매출액, 영업이익, 당기순이익)
                     List<GainLossDto> l = yearlyTableElement.select("tr").tagName("tr")
                             .stream().skip(1)
                             .filter(thtd -> {
@@ -187,20 +187,6 @@ public class FinanceCrawlingFnGuideTest {
 
                 });
             });
-//
-//            StringBuilder gainLossTableYearsSelector = new StringBuilder();
-//            gainLossTableYearsSelector.append("th[scope=").append("\"").append("col").append("\"").append("]");
-//            Elements yearsEl = gainLossTableEl.select(gainLossTableYearsSelector.toString());
-//
-//            List<String> list = yearsEl.eachText();
-//            List<String> years = IntStream.range(0, list.size())
-//                    .filter(i -> i != 0)
-//                    .filter(i -> i < list.size() - 2)
-//                    .mapToObj(i -> list.get(i))
-//                    .collect(Collectors.toList());
-//
-//            System.out.println(years);
-
         });
     }
 
