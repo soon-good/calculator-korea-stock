@@ -3,9 +3,6 @@ package io.inspect.koreanstockinspector.finance.crawling.tdd;
 import io.inspect.koreanstockinspector.request.fnguide.FnGuidePageParam;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterPair;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterType;
-import lombok.Builder;
-import lombok.Getter;
-import org.assertj.core.api.Assertions;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -14,10 +11,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -29,7 +26,8 @@ public class FinanceCrawlingFnGuideTest {
     final String tablesDivClassSelector = "ul_col2wrap pd_t25";
     final String tableSelector = "ul_co1_c pd_t1";
 
-    final String gainLossTableSelector = "divSonikY";
+    final String yearlyGainLossTableSelector = "divSonikY";
+    final String quarterlyGainLossTableSelector = "divSonikQ";
 
     record Param(String pageNoName, Integer pageNoValue, String companyNoName, String companyNoValue){};
     record TimeKeyDataValue(String time, String data){};
@@ -103,11 +101,9 @@ public class FinanceCrawlingFnGuideTest {
 
         getDocument(requestUrl).ifPresent(document -> {
 
-            HTMLSelectQuery htmlSelectQuery = HTMLSelectQuery.builder()
-                    .selectorPairs(testElementSelectorPairs1())
-                    .build();
+            HTMLSelectQuery htmlSelectQuery = new HTMLSelectQuery();
 
-            String query = htmlSelectQuery.queryString();
+            String query = htmlSelectQuery.grandChildrenAll(testElementSelectorPairs1());
 
             StringBuilder targetSql = new StringBuilder();
 
@@ -117,6 +113,94 @@ public class FinanceCrawlingFnGuideTest {
                     .append("div[class=").append("\"").append(tableSelector).append("\"").append("]");
 
             assertThat(query).isEqualTo(targetSql.toString());
+        });
+    }
+
+    public Optional<Elements> grandChildrenAll(Document document, List<ElementSelectorPair> grandChildren){
+        final HTMLSelectQuery divSectionQuery = new HTMLSelectQuery();
+        String grandChildrenSelector = divSectionQuery.grandChildrenAll(grandChildren);
+
+        if("".equals(grandChildrenSelector) || grandChildrenSelector == null)
+            return Optional.empty();
+
+        return Optional.ofNullable(document.select(grandChildrenSelector));
+    }
+
+    public Optional<Elements> atParentFindChild(Elements targetElement, ElementSelectorPair parent, ElementSelectorPair child){
+        HTMLSelectQuery tableSelQuery = new HTMLSelectQuery(parent.ofSelector());
+        tableSelQuery.next(child, NextSelectorType.CHILD);
+        return Optional.ofNullable(targetElement.select(tableSelQuery.selectorString()));
+    }
+
+    @Test
+    @DisplayName("각 연도별 매출액, 영업이익, 당기순이익에 해당하는 값에 대한 문자열 데이터 파싱")
+    public void TEST_PARSE_TH_TBODY(){
+        String requestUrl = newFnGuideUrl(FnGuidePageParam.PageType.FINANCE, testParameters1());
+
+        getDocument(requestUrl).ifPresent(document -> {
+            Optional<Elements> divSectionEl = grandChildrenAll(document, testElementSelectorPairs1());
+
+            divSectionEl.ifPresent(divElement -> {
+                // 포괄 손익 계산 DIV
+                ElementSelectorPair yearlyGainLossDiv = ofElementSelectorPair(ElementType.DIV, SelectorType.ID, SpecifierType.FULL, yearlyGainLossTableSelector);
+                // 손익 계산 내에서 table 을 파싱
+                ElementSelectorPair yearlyGainLossTable = ofElementSelectorPair(ElementType.TABLE, SelectorType.NONE, SpecifierType.NONE, "table");
+
+                atParentFindChild(divElement, yearlyGainLossDiv, yearlyGainLossTable).ifPresent(yearlyTableElement->{
+
+                    // 1) 연도 파싱 (임시)
+                    List<GainLossPeriods> yearsList = yearlyTableElement.select("tr").tagName("tr")
+                            .stream().limit(1)
+                            .map(thtd -> {
+                                List<String> data = thtd.select("th").tagName("th").eachText().stream().skip(1).limit(4).collect(Collectors.toList());
+
+                                GainLossPeriods periods = GainLossPeriods.builder()
+                                        .firstPrev(data.get(PeriodType.FIRST_PREV.getIndexAs()))
+                                        .secondPrev(data.get(PeriodType.SECOND_PREV.getIndexAs()))
+                                        .thirdPrev(data.get(PeriodType.THIRD_PREV.getIndexAs()))
+                                        .fourthPrev(data.get(PeriodType.FOURTH_PREV.getIndexAs()))
+                                        .build();
+
+                                return periods;
+                            })
+                            .collect(Collectors.toList());
+
+                    System.out.println("years = " + yearsList.get(0));
+
+                    // 각 항목 파싱 (매출액, 영업이익, 당기순이익)
+                    List<GainLossDto> l = yearlyTableElement.select("tr").tagName("tr")
+                            .stream().skip(1)
+                            .filter(thtd -> {
+                                if (thtd.tagName("th").select("div").text().equals("매출액")) return true;
+                                if (thtd.tagName("th").select("div").text().equals("영업이익")) return true;
+                                if (thtd.tagName("th").select("div").text().equals("당기순이익")) return true;
+                                else return false;
+                            })
+                            .map(thtd -> {
+                                String label = thtd.tagName("th").select("div").text();
+                                String value = thtd.tagName("td").select(".r").text();
+                                return new GainLossDto(GainLossColumn.NetIncome.krTypeOf(label), Arrays.asList(value.split(" ")).subList(0,4));
+                            })
+                            .collect(Collectors.toList());
+
+                    System.out.println(l);
+
+                });
+            });
+//
+//            StringBuilder gainLossTableYearsSelector = new StringBuilder();
+//            gainLossTableYearsSelector.append("th[scope=").append("\"").append("col").append("\"").append("]");
+//            Elements yearsEl = gainLossTableEl.select(gainLossTableYearsSelector.toString());
+//
+//            List<String> list = yearsEl.eachText();
+//            List<String> years = IntStream.range(0, list.size())
+//                    .filter(i -> i != 0)
+//                    .filter(i -> i < list.size() - 2)
+//                    .mapToObj(i -> list.get(i))
+//                    .collect(Collectors.toList());
+//
+//            System.out.println(years);
+
         });
     }
 
@@ -174,7 +258,7 @@ public class FinanceCrawlingFnGuideTest {
 
             StringBuilder gainLossTableSelectorBuilder = new StringBuilder();
             gainLossTableSelectorBuilder
-                    .append("div[id=\"").append(gainLossTableSelector).append("\"").append("]").append(" > ").append("table");
+                    .append("div[id=\"").append(yearlyGainLossTableSelector).append("\"").append("]").append(" > ").append("table");
 
             // 1) 포괄 손익 계산서
             Elements gainLossTableEl = allTableEl.select(gainLossTableSelectorBuilder.toString());

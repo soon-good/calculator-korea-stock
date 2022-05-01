@@ -42,9 +42,16 @@ public class ElementSelectorPair {
                 .append("]");                                               //      ]
     }
 
+    public String noneSelector(ElementSelectorPair pair){
+        return ofEl(pair);
+    }
+
     public StringBuilder ofSelector(){
         if(specifierType.equals(SpecifierType.FULL)){
             return fullSelector(this);
+        }
+        else if(specifierType.equals(SpecifierType.NONE)){
+            return new StringBuilder(noneSelector(this));
         }
         return fullSelector(this); // default;
     }
