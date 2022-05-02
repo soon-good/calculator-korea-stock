@@ -17,6 +17,7 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -216,26 +217,17 @@ public class FinanceCrawlingFnGuideTest {
                                         })
                                         .filter(Objects::nonNull)
                                         .collect(Collectors.toList());
-//                                return new GainLossDto(GainLossColumn.NetIncome.krTypeOf(label), Arrays.asList(value.split(" ")).subList(0,4));
-                                return new GainLossDto(GainLossColumn.NetIncome.krTypeOf(label), valueList);
+                                return new GainLossDto(GainLossColumn.krTypeOf(label), valueList);
                             })
                             .collect(Collectors.toList());
 
                     System.out.println("values = " + values);
 
-                    IntStream.range(0, 4).forEach(i -> {
-                        GainLossDto gainLossDto1 = values.get(0);
-                        GainLossDto gainLossDto2 = values.get(1);
-                        GainLossDto gainLossDto3 = values.get(2);
-                        GainLossDto gainLossDto4 = values.get(3);
-
-                        BigDecimal v1 = gainLossDto1.getValues().get(i);
-                        GainLossColumn valueType = gainLossDto1.getType();
-
-                    });
+                    Map<GainLossColumn, Integer> columnIndexMap = IntStream.range(0, values.size()).boxed()
+                            .collect(Collectors.toMap(i -> values.get(i).getType(), Function.identity()));
+                    System.out.println("columnIndexMap = " + columnIndexMap);
 
                     List<PeriodType> periodList = List.of(PeriodType.FIRST_PREV, PeriodType.SECOND_PREV, PeriodType.THIRD_PREV, PeriodType.FOURTH_PREV);
-
 
                     values.stream()
                             .forEach(gainLossDto -> {
@@ -251,6 +243,30 @@ public class FinanceCrawlingFnGuideTest {
                 });
             });
         });
+    }
+
+    public static GainLossColumn fromValuesArray(int i, List<GainLossDto> values){
+        return values.get(i).getType();
+    }
+
+    @Test
+    public void testSomething(){
+//        https://stackoverflow.com/questions/38318181/convert-intstream-to-map
+
+
+        Map<Integer, Integer> aaa = IntStream.range(1, 10).boxed().collect(Collectors.toMap(Function.identity(), integer -> integer * 2));
+        System.out.println(aaa);
+        System.out.println();
+
+        Map<Integer, Integer> a = IntStream.range(1, 10).boxed().collect(Collectors.toMap(Function.identity(), i -> i * 3));
+        System.out.println(a);
+
+        Map<Integer, Integer> collect = IntStream.range(1, 10).boxed().collect(Collectors.toMap(Function.identity(), FinanceCrawlingFnGuideTest::multiplyDouble));
+        System.out.println(collect);
+    }
+
+    public static Integer multiplyDouble(Integer i){
+        return i*2;
     }
 
     // URL 테스트 용도 파라미터 생성
