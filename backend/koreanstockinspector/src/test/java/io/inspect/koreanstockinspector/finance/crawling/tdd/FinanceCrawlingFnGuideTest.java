@@ -136,6 +136,296 @@ public class FinanceCrawlingFnGuideTest {
     }
 
     @Test
+    @DisplayName("JSoup 셀렉터 기반 조회 - 연간")
+    public void TEST_SEARCHING_JSOUP_BASED_YEARLY_DATA(){
+        getDocument(newFnGuideUrl(FnGuidePageParam.PageType.FINANCE, testParameters1())).ifPresent(document -> {
+            ElementSelectorPair first = ofElementSelectorPair(ElementType.DIV, SelectorType.CLASS, SpecifierType.FULL, tablesDivClassSelector);
+            ElementSelectorPair second = ofElementSelectorPair(ElementType.DIV, SelectorType.CLASS, SpecifierType.FULL, tableSelector);
+
+            Elements divGainLossSection = document
+                    .select(first.ofSelector().toString())
+                    .select(second.ofSelector().toString());
+
+//            System.out.println(divGainLossSection);
+
+            // 포괄 손익 계산 DIV
+            ElementSelectorPair yearlyGainLossDiv = ofElementSelectorPair(ElementType.DIV, SelectorType.ID, SpecifierType.FULL, yearlyGainLossTableSelector);
+            // 손익 계산 내에서 table 을 파싱
+            ElementSelectorPair yearlyGainLossTable = ofElementSelectorPair(ElementType.TABLE, SelectorType.NONE, SpecifierType.NONE, "table");
+
+            Elements yearlyTableElement = divGainLossSection
+                    .select(yearlyGainLossDiv.ofSelector().toString())
+                    .select(yearlyGainLossTable.ofSelector().toString());
+
+//            System.out.println(yearlyTableElement);
+
+            // 1) 연도 파싱
+            List<GainLossPeriods> yearsList = yearlyTableElement.select("tr").tagName("tr")
+                    .stream().limit(1)
+                    .map(thtd -> {
+                        List<String> data = thtd.select("th").tagName("th").eachText().stream().skip(1).limit(4).collect(Collectors.toList());
+
+                        GainLossPeriods periods = GainLossPeriods.builder()
+                                .firstPrev(data.get(PeriodType.FIRST_PREV.getIndexAs()))
+                                .secondPrev(data.get(PeriodType.SECOND_PREV.getIndexAs()))
+                                .thirdPrev(data.get(PeriodType.THIRD_PREV.getIndexAs()))
+                                .fourthPrev(data.get(PeriodType.FOURTH_PREV.getIndexAs()))
+                                .build();
+
+                        return periods;
+                    })
+                    .collect(Collectors.toList());
+
+            System.out.println("years = " + yearsList.get(0));
+
+            // 2) 각 항목 파싱 (매출액, 영업이익, 당기순이익)
+            List<GainLossDto> values = yearlyTableElement.select("tr").tagName("tr")
+                    .stream().skip(1)
+                    .filter(thtd -> {
+                        if (thtd.tagName("th").select("div").text().equals("매출액")) return true;
+                        if (thtd.tagName("th").select("div").text().equals("영업이익")) return true;
+                        if (thtd.tagName("th").select("div").text().equals("당기순이익")) return true;
+                        else return false;
+                    })
+                    .map(thtd -> {
+                        String label = thtd.tagName("th").select("div").text();
+                        String value = thtd.tagName("td").select(".r").text();
+                        List<BigDecimal> valueList = Arrays.asList(value.split(" ")).subList(0, 4)
+                                .stream()
+                                .map(str -> {
+                                    try {
+                                        Number parse = NumberFormat.getNumberInstance(Locale.US).parse(str);
+                                        BigDecimal parsedValue = new BigDecimal(parse.toString());
+                                        return parsedValue;
+                                    } catch (ParseException e) {
+                                        e.printStackTrace();
+                                    }
+                                    return null;
+                                })
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
+                        return new GainLossDto(GainLossColumn.krTypeOf(label), valueList);
+                    })
+                    .collect(Collectors.toList());
+
+            System.out.println("values = " + values);
+
+            Map<GainLossColumn, Integer> columnIndexMap = IntStream
+                    .range(0, values.size()).boxed()
+                    .collect(Collectors.toMap(i -> values.get(i).getType(), Function.identity()));
+
+            System.out.println("columnIndexMap = " + columnIndexMap);
+
+            System.out.println("===AAA===");
+            GainLossDto totalProfit = values.get(columnIndexMap.get(GainLossColumn.TotalProfit));
+            BigDecimal firstTotalProfit = totalProfit.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+            BigDecimal secondTotalProfit = totalProfit.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+            BigDecimal thirdTotalProfit = totalProfit.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+            BigDecimal fourthTotalProfit = totalProfit.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
+
+            GainLossDto opProfit = values.get(columnIndexMap.get(GainLossColumn.OperatingProfit));
+            BigDecimal firstOpProfit = opProfit.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+            BigDecimal secondOpProfit = opProfit.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+            BigDecimal thirdOpProfit = opProfit.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+            BigDecimal fourthOpProfit = opProfit.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
+
+            GainLossDto netIncome = values.get(columnIndexMap.get(GainLossColumn.NetIncome));
+            BigDecimal firstNetIncome = netIncome.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+            BigDecimal secondNetIncome = netIncome.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+            BigDecimal thirdNetIncome = netIncome.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+            BigDecimal fourthNetIncome = netIncome.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
+
+            GainLossData firstGainLoss = GainLossData.builder()
+                    .periodValue(yearsList.get(0).getFirstPrev())
+                    .periodType(PeriodType.FIRST_PREV)
+                    .totalProfit(firstTotalProfit)
+                    .operatingProfit(firstOpProfit)
+                    .netIncome(firstNetIncome)
+                    .build();
+
+            GainLossData secondGainLoss = GainLossData.builder()
+                    .periodValue(yearsList.get(0).getSecondPrev())
+                    .periodType(PeriodType.SECOND_PREV)
+                    .totalProfit(secondTotalProfit)
+                    .operatingProfit(secondOpProfit)
+                    .netIncome(secondNetIncome)
+                    .build();
+
+            GainLossData thirdGainLoss = GainLossData.builder()
+                    .periodValue(yearsList.get(0).getThirdPrev())
+                    .periodType(PeriodType.THIRD_PREV)
+                    .totalProfit(thirdTotalProfit)
+                    .operatingProfit(thirdOpProfit)
+                    .netIncome(thirdNetIncome)
+                    .build();
+
+            GainLossData fourthGainLoss = GainLossData.builder()
+                    .periodValue(yearsList.get(0).getFourthPrev())
+                    .periodType(PeriodType.FOURTH_PREV)
+                    .totalProfit(fourthTotalProfit)
+                    .operatingProfit(fourthOpProfit)
+                    .netIncome(fourthNetIncome)
+                    .build();
+
+            GainLossResult d = GainLossResult.builder()
+                    .firstPrev(firstGainLoss)
+                    .secondPrev(secondGainLoss)
+                    .thirdPrev(thirdGainLoss)
+                    .fourthPrev(fourthGainLoss)
+                    .build();
+
+            System.out.println("d = " + d);
+            System.out.println("===");
+        });
+    }
+
+
+    @Test
+    @DisplayName("JSoup 셀렉터 기반 조회 - 분기")
+    public void TEST_SEARCHING_JSOUP_BASED_QUARTERLY_DATA(){
+        getDocument(newFnGuideUrl(FnGuidePageParam.PageType.FINANCE, testParameters1())).ifPresent(document -> {
+            ElementSelectorPair first = ofElementSelectorPair(ElementType.DIV, SelectorType.CLASS, SpecifierType.FULL, tablesDivClassSelector);
+            ElementSelectorPair second = ofElementSelectorPair(ElementType.DIV, SelectorType.CLASS, SpecifierType.FULL, tableSelector);
+
+            Elements divGainLossSection = document
+                    .select(first.ofSelector().toString())
+                    .select(second.ofSelector().toString());
+
+//            System.out.println(divGainLossSection);
+
+            // 포괄 손익 계산 DIV
+            ElementSelectorPair yearlyGainLossDiv = ofElementSelectorPair(ElementType.DIV, SelectorType.ID, SpecifierType.FULL, quarterlyGainLossTableSelector);
+            // 손익 계산 내에서 table 을 파싱
+            ElementSelectorPair yearlyGainLossTable = ofElementSelectorPair(ElementType.TABLE, SelectorType.NONE, SpecifierType.NONE, "table");
+
+            Elements yearlyTableElement = divGainLossSection
+                    .select(yearlyGainLossDiv.ofSelector().toString())
+                    .select(yearlyGainLossTable.ofSelector().toString());
+
+//            System.out.println(yearlyTableElement);
+
+            // 1) 연도 파싱
+            List<GainLossPeriods> yearsList = yearlyTableElement.select("tr").tagName("tr")
+                    .stream().limit(1)
+                    .map(thtd -> {
+                        List<String> data = thtd.select("th").tagName("th").eachText().stream().skip(1).limit(4).collect(Collectors.toList());
+
+                        GainLossPeriods periods = GainLossPeriods.builder()
+                                .firstPrev(data.get(PeriodType.FIRST_PREV.getIndexAs()))
+                                .secondPrev(data.get(PeriodType.SECOND_PREV.getIndexAs()))
+                                .thirdPrev(data.get(PeriodType.THIRD_PREV.getIndexAs()))
+                                .fourthPrev(data.get(PeriodType.FOURTH_PREV.getIndexAs()))
+                                .build();
+
+                        return periods;
+                    })
+                    .collect(Collectors.toList());
+
+            System.out.println("years = " + yearsList.get(0));
+
+            // 2) 각 항목 파싱 (매출액, 영업이익, 당기순이익)
+            List<GainLossDto> values = yearlyTableElement.select("tr").tagName("tr")
+                    .stream().skip(1)
+                    .filter(thtd -> {
+                        if (thtd.tagName("th").select("div").text().equals("매출액")) return true;
+                        if (thtd.tagName("th").select("div").text().equals("영업이익")) return true;
+                        if (thtd.tagName("th").select("div").text().equals("당기순이익")) return true;
+                        else return false;
+                    })
+                    .map(thtd -> {
+                        String label = thtd.tagName("th").select("div").text();
+                        String value = thtd.tagName("td").select(".r").text();
+                        List<BigDecimal> valueList = Arrays.asList(value.split(" ")).subList(0, 4)
+                                .stream()
+                                .map(str -> {
+                                    try {
+                                        Number parse = NumberFormat.getNumberInstance(Locale.US).parse(str);
+                                        BigDecimal parsedValue = new BigDecimal(parse.toString());
+                                        return parsedValue;
+                                    } catch (ParseException e) {
+                                        e.printStackTrace();
+                                    }
+                                    return null;
+                                })
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList());
+                        return new GainLossDto(GainLossColumn.krTypeOf(label), valueList);
+                    })
+                    .collect(Collectors.toList());
+
+            System.out.println("values = " + values);
+
+            Map<GainLossColumn, Integer> columnIndexMap = IntStream
+                    .range(0, values.size()).boxed()
+                    .collect(Collectors.toMap(i -> values.get(i).getType(), Function.identity()));
+
+            System.out.println("columnIndexMap = " + columnIndexMap);
+
+            System.out.println("===AAA===");
+            GainLossDto totalProfit = values.get(columnIndexMap.get(GainLossColumn.TotalProfit));
+            BigDecimal firstTotalProfit = totalProfit.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+            BigDecimal secondTotalProfit = totalProfit.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+            BigDecimal thirdTotalProfit = totalProfit.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+            BigDecimal fourthTotalProfit = totalProfit.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
+
+            GainLossDto opProfit = values.get(columnIndexMap.get(GainLossColumn.OperatingProfit));
+            BigDecimal firstOpProfit = opProfit.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+            BigDecimal secondOpProfit = opProfit.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+            BigDecimal thirdOpProfit = opProfit.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+            BigDecimal fourthOpProfit = opProfit.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
+
+            GainLossDto netIncome = values.get(columnIndexMap.get(GainLossColumn.NetIncome));
+            BigDecimal firstNetIncome = netIncome.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+            BigDecimal secondNetIncome = netIncome.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+            BigDecimal thirdNetIncome = netIncome.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+            BigDecimal fourthNetIncome = netIncome.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
+
+            GainLossData firstGainLoss = GainLossData.builder()
+                    .periodValue(yearsList.get(0).getFirstPrev())
+                    .periodType(PeriodType.FIRST_PREV)
+                    .totalProfit(firstTotalProfit)
+                    .operatingProfit(firstOpProfit)
+                    .netIncome(firstNetIncome)
+                    .build();
+
+            GainLossData secondGainLoss = GainLossData.builder()
+                    .periodValue(yearsList.get(0).getSecondPrev())
+                    .periodType(PeriodType.SECOND_PREV)
+                    .totalProfit(secondTotalProfit)
+                    .operatingProfit(secondOpProfit)
+                    .netIncome(secondNetIncome)
+                    .build();
+
+            GainLossData thirdGainLoss = GainLossData.builder()
+                    .periodValue(yearsList.get(0).getThirdPrev())
+                    .periodType(PeriodType.THIRD_PREV)
+                    .totalProfit(thirdTotalProfit)
+                    .operatingProfit(thirdOpProfit)
+                    .netIncome(thirdNetIncome)
+                    .build();
+
+            GainLossData fourthGainLoss = GainLossData.builder()
+                    .periodValue(yearsList.get(0).getFourthPrev())
+                    .periodType(PeriodType.FOURTH_PREV)
+                    .totalProfit(fourthTotalProfit)
+                    .operatingProfit(fourthOpProfit)
+                    .netIncome(fourthNetIncome)
+                    .build();
+
+            GainLossResult d = GainLossResult.builder()
+                    .firstPrev(firstGainLoss)
+                    .secondPrev(secondGainLoss)
+                    .thirdPrev(thirdGainLoss)
+                    .fourthPrev(fourthGainLoss)
+                    .build();
+
+            System.out.println("d = " + d);
+            System.out.println("===");
+        });
+    }
+
+
+    @Test
     @DisplayName("각 연도별 매출액, 영업이익, 당기순이익에 해당하는 값에 대한 문자열 데이터 파싱")
     public void TEST_PARSE_TH_TBODY(){
         String requestUrl = newFnGuideUrl(FnGuidePageParam.PageType.FINANCE, testParameters1());
