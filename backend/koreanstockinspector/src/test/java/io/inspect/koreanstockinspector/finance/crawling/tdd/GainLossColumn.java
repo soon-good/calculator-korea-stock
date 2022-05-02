@@ -26,7 +26,7 @@ public enum GainLossColumn {
         }
     }
 
-    public GainLossColumn krTypeOf(String krLabel){
+    public static GainLossColumn krTypeOf(String krLabel){
         return colKrMap.get(krLabel);
     }
 }
