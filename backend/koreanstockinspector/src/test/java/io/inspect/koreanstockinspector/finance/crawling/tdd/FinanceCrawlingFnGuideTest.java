@@ -167,10 +167,31 @@ public class FinanceCrawlingFnGuideTest {
                             })
                             .collect(Collectors.toList());
 
+                    // 이거 다시 수정해야 한다... 급하게 하느라 개판으로 짬
+                    List<String> yearsStrList = yearlyTableElement.select("tr").tagName("tr")
+                        .stream().limit(1)
+                        .map(thtd -> {
+                            List<String> data = thtd.select("th")
+                                .tagName("th")
+                                .eachText()
+                                .stream()
+                                .skip(1)
+                                .limit(4)
+                                .collect(Collectors.toList());
+
+                            return Arrays.asList(
+                                data.get(PeriodType.FIRST_PREV.getIndexAs()),
+                                data.get(PeriodType.SECOND_PREV.getIndexAs()),
+                                data.get(PeriodType.THIRD_PREV.getIndexAs()),
+                                data.get(PeriodType.FOURTH_PREV.getIndexAs())
+                            );
+                        })
+                        .collect(Collectors.toList()).get(0);
+
                     System.out.println("years = " + yearsList.get(0));
 
                     // 2) 각 항목 파싱 (매출액, 영업이익, 당기순이익)
-                    List<GainLossDto> l = yearlyTableElement.select("tr").tagName("tr")
+                    List<GainLossDto> values = yearlyTableElement.select("tr").tagName("tr")
                             .stream().skip(1)
                             .filter(thtd -> {
                                 if (thtd.tagName("th").select("div").text().equals("매출액")) return true;
@@ -200,11 +221,23 @@ public class FinanceCrawlingFnGuideTest {
                             })
                             .collect(Collectors.toList());
 
-                    System.out.println("values = " + l);
+                    System.out.println("values = " + values);
+
+                    IntStream.range(0, 4).forEach(i -> {
+                        GainLossDto gainLossDto1 = values.get(0);
+                        GainLossDto gainLossDto2 = values.get(1);
+                        GainLossDto gainLossDto3 = values.get(2);
+                        GainLossDto gainLossDto4 = values.get(3);
+
+                        BigDecimal v1 = gainLossDto1.getValues().get(i);
+                        GainLossColumn valueType = gainLossDto1.getType();
+
+                    });
 
                     List<PeriodType> periodList = List.of(PeriodType.FIRST_PREV, PeriodType.SECOND_PREV, PeriodType.THIRD_PREV, PeriodType.FOURTH_PREV);
 
-                    l.stream()
+
+                    values.stream()
                             .forEach(gainLossDto -> {
                                 GainLossColumn valueType = gainLossDto.getType();
                                 periodList.stream()
