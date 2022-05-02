@@ -6,17 +6,17 @@ import lombok.ToString;
 
 @ToString
 public class GainLossResult {
-	@Getter private EachGainLossDto firstPrev;
-	@Getter private EachGainLossDto secondPrev;
-	@Getter private EachGainLossDto thirdPrev;
-	@Getter private EachGainLossDto fourthPrev;
+	@Getter private GainLossData firstPrev;
+	@Getter private GainLossData secondPrev;
+	@Getter private GainLossData thirdPrev;
+	@Getter private GainLossData fourthPrev;
 
 	@Builder
 	public GainLossResult(
-		EachGainLossDto firstPrev,
-		EachGainLossDto secondPrev,
-		EachGainLossDto thirdPrev,
-		EachGainLossDto fourthPrev
+		GainLossData firstPrev,
+		GainLossData secondPrev,
+		GainLossData thirdPrev,
+		GainLossData fourthPrev
 	){
 		this.firstPrev = firstPrev;
 		this.secondPrev = secondPrev;

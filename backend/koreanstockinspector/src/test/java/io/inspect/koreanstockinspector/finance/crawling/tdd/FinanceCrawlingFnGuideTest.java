@@ -168,27 +168,6 @@ public class FinanceCrawlingFnGuideTest {
                             })
                             .collect(Collectors.toList());
 
-                    // 이거 다시 수정해야 한다... 급하게 하느라 개판으로 짬
-                    List<String> yearsStrList = yearlyTableElement.select("tr").tagName("tr")
-                        .stream().limit(1)
-                        .map(thtd -> {
-                            List<String> data = thtd.select("th")
-                                .tagName("th")
-                                .eachText()
-                                .stream()
-                                .skip(1)
-                                .limit(4)
-                                .collect(Collectors.toList());
-
-                            return Arrays.asList(
-                                data.get(PeriodType.FIRST_PREV.getIndexAs()),
-                                data.get(PeriodType.SECOND_PREV.getIndexAs()),
-                                data.get(PeriodType.THIRD_PREV.getIndexAs()),
-                                data.get(PeriodType.FOURTH_PREV.getIndexAs())
-                            );
-                        })
-                        .collect(Collectors.toList()).get(0);
-
                     System.out.println("years = " + yearsList.get(0));
 
                     // 2) 각 항목 파싱 (매출액, 영업이익, 당기순이익)
@@ -223,22 +202,72 @@ public class FinanceCrawlingFnGuideTest {
 
                     System.out.println("values = " + values);
 
-                    Map<GainLossColumn, Integer> columnIndexMap = IntStream.range(0, values.size()).boxed()
+                    Map<GainLossColumn, Integer> columnIndexMap = IntStream
+                            .range(0, values.size()).boxed()
                             .collect(Collectors.toMap(i -> values.get(i).getType(), Function.identity()));
+
                     System.out.println("columnIndexMap = " + columnIndexMap);
 
-                    List<PeriodType> periodList = List.of(PeriodType.FIRST_PREV, PeriodType.SECOND_PREV, PeriodType.THIRD_PREV, PeriodType.FOURTH_PREV);
+                    System.out.println("===AAA===");
+                    GainLossDto totalProfit = values.get(columnIndexMap.get(GainLossColumn.TotalProfit));
+                    BigDecimal firstTotalProfit = totalProfit.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+                    BigDecimal secondTotalProfit = totalProfit.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+                    BigDecimal thirdTotalProfit = totalProfit.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+                    BigDecimal fourthTotalProfit = totalProfit.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
 
-                    values.stream()
-                            .forEach(gainLossDto -> {
-                                GainLossColumn valueType = gainLossDto.getType();
-                                periodList.stream()
-                                        .forEach(periodType -> {
-                                            BigDecimal bigDecimal = gainLossDto.getValues().get(periodType.getIndexAs());
-                                            System.out.println("valueType = " + valueType + ", " + periodType + ", " + periodType.getPeriodValue(yearsList.get(0)) + ", " + bigDecimal);
+                    GainLossDto opProfit = values.get(columnIndexMap.get(GainLossColumn.OperatingProfit));
+                    BigDecimal firstOpProfit = opProfit.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+                    BigDecimal secondOpProfit = opProfit.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+                    BigDecimal thirdOpProfit = opProfit.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+                    BigDecimal fourthOpProfit = opProfit.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
 
-                                        });
-                            });
+                    GainLossDto netIncome = values.get(columnIndexMap.get(GainLossColumn.NetIncome));
+                    BigDecimal firstNetIncome = netIncome.getValues().get(PeriodType.FIRST_PREV.getIndexAs());
+                    BigDecimal secondNetIncome = netIncome.getValues().get(PeriodType.SECOND_PREV.getIndexAs());
+                    BigDecimal thirdNetIncome = netIncome.getValues().get(PeriodType.THIRD_PREV.getIndexAs());
+                    BigDecimal fourthNetIncome = netIncome.getValues().get(PeriodType.FOURTH_PREV.getIndexAs());
+
+                    GainLossData firstGainLoss = GainLossData.builder()
+                            .periodValue(yearsList.get(0).getFirstPrev())
+                            .periodType(PeriodType.FIRST_PREV)
+                            .totalProfit(firstTotalProfit)
+                            .operatingProfit(firstOpProfit)
+                            .netIncome(firstNetIncome)
+                            .build();
+
+                    GainLossData secondGainLoss = GainLossData.builder()
+                            .periodValue(yearsList.get(0).getSecondPrev())
+                            .periodType(PeriodType.SECOND_PREV)
+                            .totalProfit(secondTotalProfit)
+                            .operatingProfit(secondOpProfit)
+                            .netIncome(secondNetIncome)
+                            .build();
+
+                    GainLossData thirdGainLoss = GainLossData.builder()
+                            .periodValue(yearsList.get(0).getThirdPrev())
+                            .periodType(PeriodType.THIRD_PREV)
+                            .totalProfit(thirdTotalProfit)
+                            .operatingProfit(thirdOpProfit)
+                            .netIncome(thirdNetIncome)
+                            .build();
+
+                    GainLossData fourthGainLoss = GainLossData.builder()
+                            .periodValue(yearsList.get(0).getFourthPrev())
+                            .periodType(PeriodType.FOURTH_PREV)
+                            .totalProfit(fourthTotalProfit)
+                            .operatingProfit(fourthOpProfit)
+                            .netIncome(fourthNetIncome)
+                            .build();
+
+                    GainLossResult d = GainLossResult.builder()
+                            .firstPrev(firstGainLoss)
+                            .secondPrev(secondGainLoss)
+                            .thirdPrev(thirdGainLoss)
+                            .fourthPrev(fourthGainLoss)
+                            .build();
+
+                    System.out.println("d = " + d);
+                    System.out.println("===");
 
                 });
             });
