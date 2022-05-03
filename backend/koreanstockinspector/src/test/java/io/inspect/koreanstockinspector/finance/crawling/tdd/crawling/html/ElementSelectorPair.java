@@ -1,4 +1,4 @@
-package io.inspect.koreanstockinspector.finance.crawling.tdd;
+package io.inspect.koreanstockinspector.finance.crawling.tdd.crawling.html;
 
 import lombok.Builder;
 import lombok.Getter;

@@ -1,5 +1,7 @@
-package io.inspect.koreanstockinspector.finance.crawling.tdd;
+package io.inspect.koreanstockinspector.finance.crawling.tdd.gainloss;
 
+import io.inspect.koreanstockinspector.finance.crawling.tdd.common.PeriodType;
+import io.inspect.koreanstockinspector.finance.crawling.tdd.crawling.html.*;
 import io.inspect.koreanstockinspector.request.fnguide.FnGuidePageParam;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterPair;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterType;
@@ -12,8 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.*;

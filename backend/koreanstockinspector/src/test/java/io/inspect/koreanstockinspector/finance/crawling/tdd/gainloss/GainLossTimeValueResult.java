@@ -1,4 +1,4 @@
-package io.inspect.koreanstockinspector.finance.crawling.tdd;
+package io.inspect.koreanstockinspector.finance.crawling.tdd.gainloss;
 
 import java.math.BigDecimal;
 import java.util.List;

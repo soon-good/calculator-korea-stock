@@ -1,5 +1,6 @@
-package io.inspect.koreanstockinspector.finance.crawling.tdd;
+package io.inspect.koreanstockinspector.finance.crawling.tdd.gainloss;
 
+import io.inspect.koreanstockinspector.finance.crawling.tdd.common.PeriodType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
