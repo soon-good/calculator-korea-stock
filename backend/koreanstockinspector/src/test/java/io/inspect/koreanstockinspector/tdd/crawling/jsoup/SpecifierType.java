@@ -1,4 +1,4 @@
-package io.inspect.koreanstockinspector.finance.crawling.tdd.crawling.html;
+package io.inspect.koreanstockinspector.tdd.crawling.jsoup;
 
 import lombok.Getter;
 

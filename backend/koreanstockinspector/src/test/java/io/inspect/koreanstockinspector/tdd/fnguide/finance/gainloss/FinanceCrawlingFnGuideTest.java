@@ -1,10 +1,10 @@
-package io.inspect.koreanstockinspector.finance.crawling.tdd.gainloss;
+package io.inspect.koreanstockinspector.tdd.fnguide.finance.gainloss;
 
-import io.inspect.koreanstockinspector.finance.crawling.tdd.common.PeriodType;
-import io.inspect.koreanstockinspector.finance.crawling.tdd.crawling.html.*;
+import io.inspect.koreanstockinspector.tdd.common.PeriodType;
 import io.inspect.koreanstockinspector.request.fnguide.FnGuidePageParam;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterPair;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterType;
+import io.inspect.koreanstockinspector.tdd.crawling.jsoup.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
