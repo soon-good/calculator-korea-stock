@@ -1,0 +1,27 @@
+spring:
+  profiles:
+    active: prod
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+amazon:
+  dynamodb:
+    endpoint: "http://localhost:5555"
+    region: "local"
+  aws:
+    accessKey: ""
+    secretKey: ""
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+amazon:
+  dynamodb:
+    endpoint: "http://localhost:5555"
+    region: "local"
+  aws:
+    accessKey: "key"
+    secretKey: "key"

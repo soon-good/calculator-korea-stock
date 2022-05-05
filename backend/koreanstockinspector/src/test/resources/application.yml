@@ -1,0 +1,27 @@
+spring:
+  profiles:
+    active: test-docker
+---
+spring:
+  config:
+    activate:
+      on-profile: test-docker
+amazon:
+  dynamodb:
+    endpoint: "http://localhost:5555"
+    region: "local"
+  aws:
+    accessKey: "key"
+    secretKey: "key"
+---
+spring:
+  config:
+    activate:
+      on-profile: test-in-memory
+amazon:
+  dynamodb:
+    endpoint: "http://localhost:5555"
+    region: "local"
+  aws:
+    accessKey: "key"
+    secretKey: "key"
