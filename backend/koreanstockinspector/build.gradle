@@ -16,6 +16,7 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://s3-us-west-2.amazonaws.com/dynamodb-local/release' }
 }
 
 dependencies {
@@ -23,8 +24,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.jsoup:jsoup:1.14.3'
-	// aws-java-sdk-dynamodb
-	implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.12.210'
+	// dynamoDB
+	implementation 'com.amazonaws:aws-java-sdk-dynamodb:1.12.213'
+	implementation 'com.github.derjust:spring-data-dynamodb:5.1.0'
+
 
 	// lombok
 	compileOnly 'org.projectlombok:lombok'
