@@ -18,10 +18,6 @@ import java.util.Optional;
 @NoArgsConstructor
 @DynamoDBTable(tableName = "FinanceGainLossYearly")
 public class FinanceGainLossYearly {
-
-//    @Id
-//    @Getter @Setter private FinanceGainLossYearlyId financeGainLossYearlyId;
-
     @Getter @Setter private BigDecimal totalProfit;
     @Getter @Setter private BigDecimal operatingProfit;
     @Getter @Setter private BigDecimal netIncome;
@@ -30,6 +26,9 @@ public class FinanceGainLossYearly {
     @DynamoDBHashKey(attributeName = "Ticker")
     private String ticker;
 
+    @Getter @Setter
+    @DynamoDBRangeKey(attributeName = "PriceDate")
+    @DynamoDBTypeConverted(converter = LocalDateTimeConverter.class)
     private LocalDateTime priceDate;
 
     @Builder
@@ -45,42 +44,5 @@ public class FinanceGainLossYearly {
         this.netIncome = netIncome;
         this.ticker = ticker;
         this.priceDate = priceDate;
-    }
-
-//    @DynamoDBHashKey(attributeName = "Ticker")
-//    private String getTicker(){
-//        if(isFinanceGainLossYearlyIdEmpty())
-//            return null;
-//        else
-//            return financeGainLossYearlyId.getTicker();
-//    }
-//    private void setTicker(String ticker){
-//        if(isFinanceGainLossYearlyIdEmpty()){
-//            financeGainLossYearlyId = new FinanceGainLossYearlyId();
-//        }
-//        financeGainLossYearlyId.setTicker(ticker);
-//    }
-
-    @DynamoDBRangeKey(attributeName = "PriceDate")
-    @DynamoDBTypeConverted(converter = LocalDateTimeConverter.class)
-    public LocalDateTime getPriceDate(){
-//        if(isFinanceGainLossYearlyIdEmpty())
-//            return null;
-//        else
-//            return financeGainLossYearlyId.getPriceDate();
-        return this.priceDate;
-    }
-
-    public void setPriceDate(LocalDateTime priceDate){
-//        if(isFinanceGainLossYearlyIdEmpty()){
-//            financeGainLossYearlyId = new FinanceGainLossYearlyId();
-//        }
-//        financeGainLossYearlyId.setPriceDate(priceDate);
-        this.priceDate = priceDate;
-    }
-
-    public boolean isFinanceGainLossYearlyIdEmpty(){
-//        return Optional.ofNullable(financeGainLossYearlyId).isEmpty();
-        return true;
     }
 }
