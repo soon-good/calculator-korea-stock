@@ -1,6 +1,8 @@
 spring:
   profiles:
     active: test-docker
+  main:
+    allow-bean-definition-overriding: true
 ---
 spring:
   config:
