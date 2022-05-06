@@ -1,6 +1,6 @@
 package io.inspect.koreanstockinspector.tdd.common;
 
-import io.inspect.koreanstockinspector.tdd.fnguide.finance.gainloss.GainLossPeriods;
+import io.inspect.koreanstockinspector.tdd.finance.crawling.gainloss.GainLossPeriods;
 import lombok.Getter;
 
 import java.util.HashMap;

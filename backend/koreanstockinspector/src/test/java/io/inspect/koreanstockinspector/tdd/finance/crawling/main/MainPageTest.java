@@ -1,4 +1,4 @@
-package io.inspect.koreanstockinspector.tdd.fnguide.main;
+package io.inspect.koreanstockinspector.tdd.finance.crawling.main;
 
 import io.inspect.koreanstockinspector.request.fnguide.FnGuidePageParam;
 import io.inspect.koreanstockinspector.request.fnguide.ParameterPair;

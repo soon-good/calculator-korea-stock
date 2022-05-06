@@ -1,4 +1,4 @@
-package io.inspect.koreanstockinspector.tdd.fnguide.finance.gainloss;
+package io.inspect.koreanstockinspector.tdd.finance.crawling.gainloss;
 
 import lombok.Builder;
 import lombok.Getter;

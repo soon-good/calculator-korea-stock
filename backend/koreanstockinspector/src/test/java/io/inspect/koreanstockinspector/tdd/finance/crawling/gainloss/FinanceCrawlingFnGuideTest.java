@@ -1,4 +1,4 @@
-package io.inspect.koreanstockinspector.tdd.fnguide.finance.gainloss;
+package io.inspect.koreanstockinspector.tdd.finance.crawling.gainloss;
 
 import io.inspect.koreanstockinspector.tdd.common.PeriodType;
 import io.inspect.koreanstockinspector.request.fnguide.FnGuidePageParam;
@@ -682,5 +682,30 @@ public class FinanceCrawlingFnGuideTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void TEST(){
+        GainLossDto netIncome = GainLossDto.builder()
+                .type(GainLossColumn.NetIncome)
+                .values(List.of(new BigDecimal("111"), new BigDecimal("222"), new BigDecimal("333")))
+                .build();
+
+        GainLossDto totalProfit = GainLossDto.builder()
+                .type(GainLossColumn.TotalProfit)
+                .values(List.of(new BigDecimal("444"), new BigDecimal("555"), new BigDecimal("666")))
+                .build();
+
+        GainLossDto salesProfit = GainLossDto.builder()
+                .type(GainLossColumn.OperatingProfit)
+                .values(List.of(new BigDecimal("777"), new BigDecimal("888"), new BigDecimal("999")))
+                .build();
+
+        List<GainLossDto> values = List.of(netIncome, totalProfit, salesProfit);
+        Map<GainLossColumn, Integer> columnIndexMap = IntStream.range(0, values.size())
+                .boxed()
+                .collect(Collectors.toMap(i -> values.get(i).getType(), Function.identity()));
+
+        System.out.println(columnIndexMap);
     }
 }
