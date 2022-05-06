@@ -9,7 +9,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 
 public class LocalDynamoDbTestConfigUtils {
-    record LocalDynamoDbEnvironment(AmazonDynamoDB amazonDynamoDB, DynamoDBMapper dynamoDBMapper){}
+    public record LocalDynamoDbEnvironment(AmazonDynamoDB amazonDynamoDB, DynamoDBMapper dynamoDBMapper){}
 
     public static LocalDynamoDbEnvironment newLocalDynamoDbEnvironment(){
         AwsClientBuilder.EndpointConfiguration endpointConfig = new AwsClientBuilder.EndpointConfiguration(
