@@ -34,7 +34,7 @@ public class DynamoDbTestConfig {
     public AmazonDynamoDB amazonDynamoDB(){
         AWSStaticCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(
                 new BasicAWSCredentials(
-                        "AKIATF2F735OJAS37M6K", "clJ5HpU+4jomg6hc4uT5WtbuE0RsroxmN8wYn8as"
+                        "key", "key"
                 )
         );
 
