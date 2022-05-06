@@ -32,7 +32,8 @@ public class LocalDynamoFinanceQuarterlyCRUDTest {
     @Test
     @DisplayName("FinanceGainLossQuarterly 테이블 생성 >> spring-data-dynamodb 의 DynamodbMapper 를 이용해 테이블을 생성")
     public void TEST_CRAETE_TABLE_BY_ORM_MAPPER_DYNAMODBMAPPER(){
-        CreateTableRequest request = dynamoDBMapper.generateCreateTableRequest(FinanceGainLossQuarterly.class)
+        CreateTableRequest request = dynamoDBMapper
+                .generateCreateTableRequest(FinanceGainLossQuarterly.class)
                 .withProvisionedThroughput(new ProvisionedThroughput(1L, 1L));
 
         then(TableUtils.createTableIfNotExists(amazonDynamoDB, request)).isTrue();
