@@ -8,7 +8,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 
-public class LocalDynamoDbTestConfigUtils {
+public class DockerLocalDynamoDbTestConfigUtils {
     public record LocalDynamoDbEnvironment(AmazonDynamoDB amazonDynamoDB, DynamoDBMapper dynamoDBMapper){}
 
     public static LocalDynamoDbEnvironment newLocalDynamoDbEnvironment(){
